@@ -518,6 +518,11 @@ app.put('/api/staff/menu/:id', authenticateToken, upload.single('image'), async 
     const item = await dbGet('SELECT * FROM menu_items WHERE id = ?', [req.params.id]);
     
     if (!item) return res.status(404).json({ error: 'Not found' });
+
+    const parseFlag = (value, fallback) => {
+      if (value === undefined) return fallback;
+      return value === true || value === 1 || value === '1' || value === 'true' ? 1 : 0;
+    };
     
     let image_url = item.image_url;
     if (req.file) {
@@ -527,7 +532,16 @@ app.put('/api/staff/menu/:id', authenticateToken, upload.single('image'), async 
     
     await dbRun(
       'UPDATE menu_items SET name = ?, description = ?, price = ?, category_id = ?, image_url = ?, is_available = ?, is_hidden = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, description || null, parseInt(price), parseInt(category_id), image_url, is_available ? 1 : 0, is_hidden ? 1 : 0, req.params.id]
+      [
+        name,
+        description || null,
+        parseInt(price),
+        parseInt(category_id),
+        image_url,
+        parseFlag(is_available, item.is_available),
+        parseFlag(is_hidden, item.is_hidden),
+        req.params.id
+      ]
     );
     
     res.json({ message: 'Menu item updated' });

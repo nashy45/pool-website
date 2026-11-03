@@ -1,6 +1,8 @@
 // Global state
 let token = localStorage.getItem('staffToken');
 let currentPage = 'overview';
+let currentOrderFilter = 'all';
+let galleryMediaItems = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -403,13 +405,23 @@ async function loadOrders() {
   if (!container) return;
   
   container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading orders...</p></div>';
+  document.querySelectorAll('#ordersPage [data-order-filter]').forEach(button => {
+    button.classList.toggle('active', button.dataset.orderFilter === currentOrderFilter);
+  });
   
   try {
-    const response = await apiRequest('/api/staff/orders');
+    const query = currentOrderFilter === 'all'
+      ? ''
+      : `?status=${encodeURIComponent(currentOrderFilter)}`;
+    const response = await apiRequest(`/api/staff/orders${query}`);
+    if (!response.ok) throw new Error('Failed to load orders');
     const orders = await response.json();
     
     if (orders.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>No orders yet</p></div>';
+      const emptyMessage = currentOrderFilter === 'all'
+        ? 'No orders yet'
+        : `No ${currentOrderFilter} orders`;
+      container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><p>${emptyMessage}</p></div>`;
       return;
     }
     
@@ -446,15 +458,16 @@ async function loadOrders() {
 
 async function updateOrderStatus(orderId, status) {
   try {
-    await apiRequest(`/api/staff/orders/${orderId}/status`, {
+    const response = await apiRequest(`/api/staff/orders/${orderId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status })
     });
-    loadOrders();
+    if (!response.ok) throw new Error('Failed to update order status');
+    await loadOrders();
     if (currentPage === 'overview') loadOverviewData();
   } catch (error) {
     console.error('Error updating order:', error);
-    alert('Failed to update order status');
+    alert(error.message || 'Failed to update order status');
   }
 }
 
@@ -729,7 +742,7 @@ async function toggleMenuItemAvailability(id, isAvailable) {
     formData.append('price', item.price);
     formData.append('category_id', item.category_id);
     formData.append('is_available', isAvailable ? '1' : '0');
-    formData.append('is_hidden', item.is_hidden);
+    formData.append('is_hidden', item.is_hidden ? '1' : '0');
     
     await fetch(`/api/staff/menu/${id}`, {
       method: 'PUT',
@@ -756,9 +769,118 @@ async function deleteMenuItem(id) {
   }
 }
 
-function editMenuItem(id) {
-  // TODO: Implement edit modal
-  alert('Edit functionality coming soon!');
+async function editMenuItem(id) {
+  try {
+    const [itemsResponse, categoriesResponse] = await Promise.all([
+      apiRequest('/api/staff/menu'),
+      apiRequest('/api/staff/menu-categories')
+    ]);
+
+    if (!itemsResponse.ok || !categoriesResponse.ok) {
+      throw new Error('Failed to load menu item details');
+    }
+
+    const [items, categories] = await Promise.all([
+      itemsResponse.json(),
+      categoriesResponse.json()
+    ]);
+    const item = items.find(menuItem => Number(menuItem.id) === Number(id));
+
+    if (!item) {
+      alert('Menu item not found. Refresh the menu and try again.');
+      return;
+    }
+
+    window.menuCategories = categories;
+    const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]);
+    const modal = document.getElementById('modalContainer');
+    modal.innerHTML = `
+      <div class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px; width: 100%;">
+          <h2 style="color: var(--cream); margin-bottom: 1.5rem;">Edit Menu Item</h2>
+          <form id="editMenuItemForm">
+            <div style="margin-bottom: 1rem;">
+              <label for="editMenuItemName" style="display: block; color: var(--cream); margin-bottom: 0.5rem; font-size: 0.875rem;">Name *</label>
+              <input id="editMenuItemName" type="text" name="name" value="${escapeHTML(item.name)}" required style="width: 100%; padding: 0.75rem; background: var(--charcoal-900); border: 1px solid rgba(201, 169, 97, 0.2); border-radius: 6px; color: var(--cream);">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label for="editMenuItemCategory" style="display: block; color: var(--cream); margin-bottom: 0.5rem; font-size: 0.875rem;">Category *</label>
+              <select id="editMenuItemCategory" name="category_id" required style="width: 100%; padding: 0.75rem; background: var(--charcoal-900); border: 1px solid rgba(201, 169, 97, 0.2); border-radius: 6px; color: var(--cream);">
+                ${categories.map(category => `
+                  <option value="${category.id}" ${Number(category.id) === Number(item.category_id) ? 'selected' : ''}>${escapeHTML(category.name)}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label for="editMenuItemPrice" style="display: block; color: var(--cream); margin-bottom: 0.5rem; font-size: 0.875rem;">Price (FCFA) *</label>
+              <input id="editMenuItemPrice" type="number" name="price" value="${escapeHTML(item.price)}" required min="0" step="1" style="width: 100%; padding: 0.75rem; background: var(--charcoal-900); border: 1px solid rgba(201, 169, 97, 0.2); border-radius: 6px; color: var(--cream);">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label for="editMenuItemDescription" style="display: block; color: var(--cream); margin-bottom: 0.5rem; font-size: 0.875rem;">Description</label>
+              <textarea id="editMenuItemDescription" name="description" rows="3" style="width: 100%; padding: 0.75rem; background: var(--charcoal-900); border: 1px solid rgba(201, 169, 97, 0.2); border-radius: 6px; color: var(--cream); resize: vertical;">${escapeHTML(item.description)}</textarea>
+            </div>
+            <div style="margin-bottom: 1rem; color: var(--cream);">
+              <label><input type="checkbox" name="is_available" ${item.is_available ? 'checked' : ''}> Available for order</label>
+            </div>
+            <div style="margin-bottom: 1rem; color: var(--cream);">
+              <label><input type="checkbox" name="is_hidden" ${item.is_hidden ? 'checked' : ''}> Hide from customer menu</label>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+              <label for="editMenuItemImage" style="display: block; color: var(--cream); margin-bottom: 0.5rem; font-size: 0.875rem;">Change Image</label>
+              <input id="editMenuItemImage" type="file" name="image" accept="image/*" style="width: 100%; padding: 0.75rem; background: var(--charcoal-900); border: 1px solid rgba(201, 169, 97, 0.2); border-radius: 6px; color: var(--cream);">
+              ${item.image_url ? `<small style="display: block; color: var(--cream-dark); margin-top: 0.5rem;">Current image will be kept unless you choose a replacement.</small><img src="${escapeHTML(item.image_url)}" alt="Current ${escapeHTML(item.name)}" style="width: 100%; max-height: 140px; object-fit: cover; margin-top: 0.5rem; border-radius: 6px;">` : ''}
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button type="submit" class="btn-primary" style="flex: 1;">Save Changes</button>
+              <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    modal.style.display = 'block';
+
+    document.getElementById('editMenuItemForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const formData = new FormData(form);
+      formData.set('is_available', form.elements.is_available.checked ? '1' : '0');
+      formData.set('is_hidden', form.elements.is_hidden.checked ? '1' : '0');
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+
+      try {
+        const response = await fetch(`/api/staff/menu/${id}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error || 'Failed to update menu item');
+        }
+
+        closeModal();
+        await loadMenu();
+        loadOverviewData();
+        alert('Menu item updated successfully!');
+      } catch (error) {
+        console.error('Error updating menu item:', error);
+        alert(error.message || 'Failed to update menu item');
+        submitButton.disabled = false;
+      }
+    });
+  } catch (error) {
+    console.error('Error loading menu item for editing:', error);
+    alert(error.message || 'Failed to open menu item for editing');
+  }
 }
 
 // Tables Page
@@ -769,6 +891,9 @@ async function loadTables() {
       <button class="btn-primary" onclick="showAddTableModal()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Table/Resource
+      </button>
+      <button class="btn-secondary" onclick="printTableQRCodes()">
+        Print QR Codes / Save as PDF
       </button>
       <button class="btn-secondary" onclick="loadTables()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
@@ -782,7 +907,9 @@ async function loadTables() {
   
   try {
     const response = await apiRequest('/api/staff/resources');
+    if (!response.ok) throw new Error('Failed to load tables and resources');
     const resources = await response.json();
+    window.tableResources = resources;
     
     const container = document.getElementById('tablesContainer');
     
@@ -829,7 +956,89 @@ async function loadTables() {
     `;
   } catch (error) {
     console.error('Error loading tables:', error);
+    const container = document.getElementById('tablesContainer');
+    if (container) container.innerHTML = '<div class="empty-state"><p>Error loading tables</p></div>';
   }
+}
+
+function printTableQRCodes() {
+  const resources = (window.tableResources || []).filter(
+    resource => resource.is_active && resource.qr_code_url
+  );
+
+  if (resources.length === 0) {
+    alert('There are no QR codes to print yet. Generate a QR code for an active table first.');
+    return;
+  }
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Allow pop-ups for this dashboard to print or save your QR codes as a PDF.');
+    return;
+  }
+
+  const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+  const cards = resources.map(resource => `
+    <article class="qr-card">
+      <h2>${escapeHTML(resource.name)}</h2>
+      <img src="${escapeHTML(new URL(resource.qr_code_url, window.location.origin).href)}" alt="QR code for ${escapeHTML(resource.name)}">
+      <p>Scan to view the menu and order at this table</p>
+    </article>
+  `).join('');
+
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Pool's Arena Table QR Codes</title>
+      <style>
+        @page { size: A4; margin: 14mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #202020; font: 14px Arial, sans-serif; }
+        header { margin-bottom: 18px; text-align: center; }
+        header h1 { margin: 0 0 5px; font-size: 22px; }
+        header p { margin: 0; color: #555; }
+        .qr-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12mm 10mm; }
+        .qr-card { display: flex; min-height: 100mm; flex-direction: column; align-items: center; justify-content: center; padding: 8mm; border: 1px solid #bbb; border-radius: 4mm; text-align: center; break-inside: avoid; }
+        .qr-card h2 { margin: 0 0 5mm; font-size: 20px; }
+        .qr-card img { width: 58mm; height: 58mm; object-fit: contain; image-rendering: pixelated; }
+        .qr-card p { margin: 5mm 0 0; font-size: 12px; }
+        .print-error { padding: 16px; color: #a00; text-align: center; }
+        @media screen {
+          body { max-width: 210mm; margin: 20px auto; padding: 16px; }
+          .qr-card { min-height: 110mm; }
+        }
+      </style>
+    </head>
+    <body>
+      <header>
+        <h1>Pool's Arena Club &amp; Bar</h1>
+        <p>Table QR codes · Scan to open the menu for your table</p>
+      </header>
+      <main class="qr-grid">${cards}</main>
+      <script>
+        const images = Array.from(document.images);
+        Promise.all(images.map(image => image.decode().catch(() => null))).then(() => {
+          const failed = images.filter(image => !image.naturalWidth);
+          if (failed.length) {
+            document.body.insertAdjacentHTML('afterbegin',
+              '<p class="print-error">Some QR codes could not be loaded. Close this page and try again.</p>');
+            return;
+          }
+          setTimeout(() => window.print(), 250);
+        });
+      <\/script>
+    </body>
+    </html>`);
+  printWindow.document.close();
 }
 
 function showAddTableModal() {
@@ -938,110 +1147,164 @@ async function deleteResource(id) {
 async function loadMedia() {
   const page = document.getElementById('mediaPage');
   page.innerHTML = `
-    <div style="max-width: 1200px;">
-      <div class="page-header" style="margin-bottom: var(--space-xl);">
-        <div style="background: rgba(201, 169, 97, 0.1); padding: var(--space-md); border-radius: var(--radius-md); border-left: 3px solid var(--gold); margin-bottom: var(--space-lg);">
-          <strong style="color: var(--gold);">📸 Website Photos & Video</strong>
-          <p style="margin-top: 0.5rem; color: var(--cream-dark); font-size: 0.9rem;">Manage the hero video, poster image, and gallery photos that appear on the customer-facing website. Upload professional photos of your venue, bar, and pool tables.</p>
+    <div class="media-management">
+      <div class="media-intro">
+        <div>
+          <strong>📸 Website Photos &amp; Video</strong>
+          <p>Manage the hero video, poster image, and gallery photos that appear on the customer-facing website. Upload professional photos of your venue, bar, and pool tables.</p>
         </div>
       </div>
       
       <!-- Hero Section Media -->
-      <div class="data-card" style="background: var(--charcoal-800); border: 1px solid rgba(201, 169, 97, 0.1); border-radius: 8px; padding: 2rem; margin-bottom: 1.5rem;">
-        <h3 style="color: var(--gold); margin-bottom: 1rem; font-size: 1.25rem;">Hero Section</h3>
-        <p style="color: var(--cream-dark); margin-bottom: 1.5rem; font-size: 0.9rem;">The hero section is the first thing visitors see. Upload a poster image and optionally a short video (10-20 seconds) of your venue.</p>
+      <div class="data-card media-section-card">
+        <h3>Hero Section</h3>
+        <p class="media-section-description">The hero section is the first thing visitors see. Upload a poster image and optionally a short video (10-20 seconds) of your venue.</p>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-          <div>
-            <h4 style="color: var(--cream); margin-bottom: 0.75rem;">Hero Poster Image</h4>
-            <div id="heroPosterPreview" style="aspect-ratio: 16/9; background: var(--charcoal-900); border-radius: 6px; overflow: hidden; margin-bottom: 0.75rem;">
+        <div class="hero-media-grid">
+          <div class="hero-media-slot">
+            <h4>Hero Poster Image</h4>
+            <div id="heroPosterPreview" class="hero-media-preview">
               <img src="/media/hero/poster-desktop.jpg" alt="Current hero poster" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-            <button class="btn-secondary" onclick="uploadHeroMedia('hero_poster')" style="width: 100%;">
+            <p id="heroPosterStatus" class="media-file-status">Using the default website image</p>
+            <button class="btn-secondary media-upload-button" onclick="uploadHeroMedia('hero_poster')">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Upload New Poster
             </button>
           </div>
           
-          <div>
-            <h4 style="color: var(--cream); margin-bottom: 0.75rem;">Hero Video (Optional)</h4>
-            <div style="aspect-ratio: 16/9; background: var(--charcoal-900); border-radius: 6px; overflow: hidden; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center;">
+          <div class="hero-media-slot">
+            <h4>Hero Video <span class="media-optional">Optional</span></h4>
+            <div id="heroVideoPreview" class="hero-media-preview hero-video-preview">
               <div style="text-align: center; padding: 2rem; color: var(--cream-dark);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.5;">
                   <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                <p style="font-size: 0.875rem;">No video uploaded yet</p>
-                <p style="font-size: 0.75rem; margin-top: 0.5rem;">Upload a 10-20 second MP4 video</p>
+                <p>No video uploaded yet</p>
+                <p>Upload a 10-20 second MP4 video</p>
               </div>
             </div>
-            <button class="btn-secondary" onclick="uploadHeroMedia('hero_video')" style="width: 100%;">
+            <p id="heroVideoStatus" class="media-file-status">No custom video uploaded</p>
+            <button class="btn-secondary media-upload-button" onclick="uploadHeroMedia('hero_video')">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Upload Video
             </button>
           </div>
         </div>
         
-        <div style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 0.85rem; color: var(--cream-dark);">
+        <div class="media-tip">
           <strong style="color: var(--gold);">💡 Tips:</strong> Use high-quality photos (1920x1080 or larger). Keep videos under 20 seconds and 10MB. Videos show only on fast connections.
         </div>
       </div>
       
       <!-- Gallery Section -->
-      <div class="data-card" style="background: var(--charcoal-800); border: 1px solid rgba(201, 169, 97, 0.1); border-radius: 8px; padding: 2rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div class="data-card media-section-card">
+        <div class="media-section-heading">
           <div>
-            <h3 style="color: var(--gold); margin-bottom: 0.25rem; font-size: 1.25rem;">Gallery Photos</h3>
-            <p style="color: var(--cream-dark); font-size: 0.9rem;">Photos of your venue that visitors can browse</p>
+            <h3>Gallery Photos</h3>
+            <p class="media-section-description">Photos of your venue that visitors can browse</p>
           </div>
           <button class="btn-primary" onclick="uploadGalleryPhoto()">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Photo
+            Add Gallery Photo
           </button>
         </div>
         
-        <div id="galleryMediaList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+        <div id="galleryMediaList" class="media-gallery-grid">
           <div class="loading"><div class="spinner"></div><p>Loading gallery...</p></div>
         </div>
       </div>
     </div>
   `;
   
-  // Load gallery photos
+  loadHeroMedia();
   loadGalleryMedia();
+}
+
+async function loadHeroMedia() {
+  try {
+    const [posterResponse, videoResponse] = await Promise.all([
+      apiRequest('/api/staff/media?type=hero_poster'),
+      apiRequest('/api/staff/media?type=hero_video')
+    ]);
+    if (!posterResponse.ok || !videoResponse.ok) {
+      throw new Error('Failed to load homepage media');
+    }
+
+    const [posters, videos] = await Promise.all([
+      posterResponse.json(),
+      videoResponse.json()
+    ]);
+    const poster = posters[0];
+    const video = videos[0];
+
+    if (poster) {
+      document.getElementById('heroPosterPreview').innerHTML =
+        `<img src="${escapeMediaHTML(poster.file_path)}" alt="${escapeMediaHTML(poster.alt_text || 'Current hero poster')}">`;
+      document.getElementById('heroPosterStatus').textContent =
+        `Uploaded ${new Date(poster.created_at).toLocaleDateString()}`;
+    }
+
+    if (video) {
+      document.getElementById('heroVideoPreview').innerHTML =
+        `<video src="${escapeMediaHTML(video.file_path)}" controls preload="metadata" aria-label="Uploaded homepage background video"></video>`;
+      document.getElementById('heroVideoStatus').textContent =
+        `Uploaded ${new Date(video.created_at).toLocaleDateString()}`;
+    }
+  } catch (error) {
+    console.error('Error loading homepage media:', error);
+    const status = document.getElementById('heroPosterStatus');
+    if (status) status.textContent = 'Could not load uploaded media. Refresh to try again.';
+  }
 }
 
 async function loadGalleryMedia() {
   try {
     const response = await apiRequest('/api/staff/media?type=gallery');
+    if (!response.ok) throw new Error('Failed to load gallery photos');
     const media = await response.json();
+    galleryMediaItems = media;
     
     const container = document.getElementById('galleryMediaList');
     if (!container) return;
     
     if (media.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--cream-dark);"><p>No gallery photos yet. Add your first photo!</p></div>';
+      container.innerHTML = '<div class="media-gallery-empty"><span aria-hidden="true">▧</span><strong>Your gallery is ready for its first photo</strong><p>Add photos of your venue, bar, food, or pool tables.</p></div>';
       return;
     }
     
     container.innerHTML = media.map(item => `
-      <div class="data-card" style="background: var(--charcoal-900); border: 1px solid rgba(201, 169, 97, 0.1); border-radius: 8px; overflow: hidden;">
-        <img src="${item.file_path}" alt="${item.alt_text || 'Gallery photo'}" style="width: 100%; aspect-ratio: 4/3; object-fit: cover;">
-        <div style="padding: 0.75rem;">
-          <input 
-            type="text" 
-            value="${item.alt_text || ''}" 
-            placeholder="Photo description (for accessibility)"
-            onblur="updateMediaAlt(${item.id}, this.value)"
-            style="width: 100%; padding: 0.5rem; background: var(--charcoal-800); border: 1px solid rgba(201, 169, 97, 0.2); border-radius: 4px; color: var(--cream); font-size: 0.8125rem; margin-bottom: 0.5rem;">
-          <div style="display: flex; gap: 0.5rem;">
-            <button class="tab-btn" style="flex: 1; padding: 0.375rem; font-size: 0.75rem;" onclick="deleteMedia(${item.id})">Delete</button>
-          </div>
+      <article class="media-gallery-item">
+        <img src="${escapeMediaHTML(item.file_path)}" alt="${escapeMediaHTML(item.alt_text || 'Gallery photo')}">
+        <div class="media-gallery-item-content">
+          <label for="media-alt-${item.id}">Photo description</label>
+          <input
+            id="media-alt-${item.id}"
+            type="text"
+            value="${escapeMediaHTML(item.alt_text || '')}"
+            placeholder="Describe this photo"
+            onchange="updateMediaAlt(${item.id}, this.value)">
+          <button class="media-delete-button" onclick="deleteMedia(${item.id})">Delete photo</button>
         </div>
-      </div>
+      </article>
     `).join('');
   } catch (error) {
     console.error('Error loading gallery:', error);
+    const container = document.getElementById('galleryMediaList');
+    if (container) {
+      container.innerHTML = '<div class="media-gallery-empty"><strong>Could not load gallery photos</strong><p>Refresh the page to try again.</p></div>';
+    }
   }
+}
+
+function escapeMediaHTML(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
 }
 
 function uploadHeroMedia(type) {
@@ -1074,7 +1337,7 @@ function uploadHeroMedia(type) {
       
       if (!response.ok) throw new Error('Upload failed');
       
-      alert(`${type === 'hero_video' ? 'Video' : 'Photo'} uploaded successfully! Refresh to see changes.`);
+      alert(`${type === 'hero_video' ? 'Video' : 'Photo'} uploaded successfully!`);
       loadMedia();
     } catch (error) {
       console.error('Upload error:', error);
@@ -1126,12 +1389,22 @@ function uploadGalleryPhoto() {
 
 async function updateMediaAlt(id, altText) {
   try {
-    await apiRequest(`/api/staff/media/${id}`, {
+    const item = galleryMediaItems.find(media => Number(media.id) === Number(id));
+    if (!item) throw new Error('Gallery photo not found. Refresh the page and try again.');
+
+    const response = await apiRequest(`/api/staff/media/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ alt_text: altText })
+      body: JSON.stringify({
+        alt_text: altText,
+        caption: item.caption || '',
+        display_order: item.display_order,
+        is_active: item.is_active
+      })
     });
+    if (!response.ok) throw new Error('Failed to update photo description');
   } catch (error) {
     console.error('Error updating alt text:', error);
+    alert(error.message || 'Failed to update photo description');
   }
 }
 
@@ -1284,8 +1557,8 @@ function closeModal() {
 }
 
 function filterOrders(status) {
-  console.log('Filter orders:', status);
-  document.querySelectorAll('#ordersPage .tab-btn').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
+  const filters = ['all', 'new', 'preparing', 'ready', 'served'];
+  if (!filters.includes(status)) return;
+  currentOrderFilter = status;
   loadOrders();
 }
