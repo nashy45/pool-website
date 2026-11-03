@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owner Dashboard - Pool's Arena</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-container">
+      <img src="/images/logo.png" alt="Pool's Arena" class="login-logo">
+      <h1>Owner Dashboard</h1>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+      </form>
+      <a href="/" class="back-link">← Back to Website</a>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboardScreen" class="dashboard-screen" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="/images/logo.png" alt="Pool's Arena" class="sidebar-logo">
+        <h2>Pool's Arena</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="overview">
+          <span class="nav-icon">📊</span>
+          Overview
+        </a>
+        <a href="#" class="nav-item" data-page="orders">
+          <span class="nav-icon">🛒</span>
+          Orders
+          <span class="badge" id="ordersBadge">0</span>
+        </a>
+        <a href="#" class="nav-item" data-page="reservations">
+          <span class="nav-icon">📅</span>
+          Reservations
+          <span class="badge" id="reservationsBadge">0</span>
+        </a>
+        <a href="#" class="nav-item" data-page="menu">
+          <span class="nav-icon">🍽️</span>
+          Menu Management
+        </a>
+        <a href="#" class="nav-item" data-page="tables">
+          <span class="nav-icon">🎱</span>
+          Tables & Resources
+        </a>
+        <a href="#" class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙️</span>
+          Business Settings
+        </a>
+        <a href="#" class="nav-item" data-page="account">
+          <span class="nav-icon">👤</span>
+          Account
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-block" id="logoutBtn">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="topbar">
+        <h1 id="pageTitle">Dashboard Overview</h1>
+        <div class="user-info">
+          <span id="userName">Owner</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Overview Page -->
+        <div id="overviewPage" class="page active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">🛒</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statPendingOrders">0</div>
+                <div class="stat-label">Pending Orders</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statPendingReservations">0</div>
+                <div class="stat-label">Pending Reservations</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🍽️</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statMenuItems">0</div>
+                <div class="stat-label">Menu Items</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🎱</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statTables">0</div>
+                <div class="stat-label">Active Tables</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📦</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statTodayOrders">0</div>
+                <div class="stat-label">Today's Orders</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">💰</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statTodayRevenue">0</div>
+                <div class="stat-label">Today's Revenue (FCFA)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+              <button class="btn btn-primary" onclick="navigateTo('orders')">View Orders</button>
+              <button class="btn btn-primary" onclick="navigateTo('reservations')">View Reservations</button>
+              <button class="btn btn-primary" onclick="navigateTo('menu')">Manage Menu</button>
+              <button class="btn btn-primary" onclick="navigateTo('tables')">Manage Tables</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orders Page -->
+        <div id="ordersPage" class="page">
+          <div class="page-header">
+            <div class="filter-tabs">
+              <button class="tab-btn active" onclick="filterOrders('all')">All</button>
+              <button class="tab-btn" onclick="filterOrders('new')">New</button>
+              <button class="tab-btn" onclick="filterOrders('accepted')">Accepted</button>
+              <button class="tab-btn" onclick="filterOrders('preparing')">Preparing</button>
+              <button class="tab-btn" onclick="filterOrders('ready')">Ready</button>
+              <button class="tab-btn" onclick="filterOrders('served')">Served</button>
+            </div>
+            <button class="btn btn-secondary" onclick="loadOrders()">🔄 Refresh</button>
+          </div>
+          <div id="ordersContainer" class="data-container"></div>
+        </div>
+
+        <!-- Reservations Page -->
+        <div id="reservationsPage" class="page">
+          <div class="page-header">
+            <div class="filter-tabs">
+              <button class="tab-btn active" onclick="filterReservations('all')">All</button>
+              <button class="tab-btn" onclick="filterReservations('pending')">Pending</button>
+              <button class="tab-btn" onclick="filterReservations('confirmed')">Confirmed</button>
+              <button class="tab-btn" onclick="filterReservations('declined')">Declined</button>
+            </div>
+            <button class="btn btn-secondary" onclick="loadReservations()">🔄 Refresh</button>
+          </div>
+          <div id="reservationsContainer" class="data-container"></div>
+        </div>
+
+        <!-- Menu Management Page -->
+        <div id="menuPage" class="page">
+          <div class="page-header">
+            <button class="btn btn-primary" onclick="showAddMenuItem()">+ Add Menu Item</button>
+          </div>
+          <div id="menuContainer" class="data-container"></div>
+        </div>
+
+        <!-- Tables Page -->
+        <div id="tablesPage" class="page">
+          <div class="page-header">
+            <button class="btn btn-primary" onclick="showAddTable()">+ Add Table/Resource</button>
+          </div>
+          <div id="tablesContainer" class="data-container"></div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settingsPage" class="page">
+          <form id="settingsForm" class="settings-form">
+            <h3>Business Information</h3>
+            <div class="form-group">
+              <label>Business Name</label>
+              <input type="text" name="business_name" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" required>
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" name="location" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Opening Time</label>
+                <input type="time" name="opening_time">
+              </div>
+              <div class="form-group">
+                <label>Closing Time (Optional)</label>
+                <input type="time" name="closing_time">
+              </div>
+            </div>
+            
+            <h3>Payment Merchant Codes</h3>
+            <div class="form-group">
+              <label>MTN Mobile Money Merchant Code</label>
+              <input type="text" name="mtn_merchant_code" placeholder="Enter your MTN MoMo merchant code">
+              <small>Contact MTN to obtain your merchant code</small>
+            </div>
+            <div class="form-group">
+              <label>Orange Money / Max it Merchant Code</label>
+              <input type="text" name="orange_merchant_code" placeholder="Enter your Orange Money merchant code">
+              <small>Contact Orange to obtain your merchant code</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </form>
+        </div>
+
+        <!-- Account Page -->
+        <div id="accountPage" class="page">
+          <form id="changePasswordForm" class="settings-form">
+            <h3>Change Password</h3>
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" name="current_password" required>
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" name="new_password" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" name="confirm_password" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary">Change Password</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="modalContainer"></div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

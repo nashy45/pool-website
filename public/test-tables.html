@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Tables Display</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #1a1a1a; color: #f5f3f0; }
+    .card { background: #2a2a2a; border: 1px solid #c9a961; border-radius: 8px; padding: 20px; margin: 20px 0; max-width: 400px; }
+    button { background: #c9a961; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #d4b572; }
+    .qr { background: white; padding: 10px; border-radius: 4px; margin: 10px 0; text-align: center; }
+    pre { background: #000; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Tables Debug Page</h1>
+  <p>This page shows what tables exist and whether they have QR codes.</p>
+  
+  <button onclick="loadTables()">🔄 Load Tables from Database</button>
+  
+  <div id="output"></div>
+  
+  <script>
+    async function loadTables() {
+      const output = document.getElementById('output');
+      output.innerHTML = '<p>Loading...</p>';
+      
+      try {
+        // Note: This won't work without authentication, but we'll see the error
+        const response = await fetch('/api/staff/resources');
+        
+        if (!response.ok) {
+          output.innerHTML = `
+            <div class="card">
+              <h3>⚠️ API Error</h3>
+              <p>Status: ${response.status}</p>
+              <p>You need to be logged in to the staff dashboard first.</p>
+              <p><a href="/staff/login" style="color: #c9a961;">Click here to login</a></p>
+            </div>
+          `;
+          return;
+        }
+        
+        const resources = await response.json();
+        
+        if (resources.length === 0) {
+          output.innerHTML = '<div class="card"><p>No tables found in database.</p></div>';
+          return;
+        }
+        
+        output.innerHTML = '<h2>📊 Found ' + resources.length + ' table(s):</h2>';
+        
+        resources.forEach(resource => {
+          const hasQR = !!resource.qr_code_url;
+          
+          output.innerHTML += `
+            <div class="card">
+              <h3>${resource.name}</h3>
+              <p><strong>Type:</strong> ${resource.type}</p>
+              <p><strong>Capacity:</strong> ${resource.capacity}</p>
+              <p><strong>Active:</strong> ${resource.is_active ? 'Yes' : 'No'}</p>
+              <p><strong>QR Code URL:</strong> ${resource.qr_code_url || 'NOT GENERATED'}</p>
+              
+              ${hasQR ? `
+                <div class="qr">
+                  <img src="${resource.qr_code_url}" alt="QR Code" style="max-width: 150px;">
+                  <p>✅ QR Code exists</p>
+                </div>
+              ` : `
+                <p style="color: #ff9800; font-weight: bold;">❌ No QR code - "Generate QR Code" button should show</p>
+              `}
+              
+              <h4>Raw Data:</h4>
+              <pre>${JSON.stringify(resource, null, 2)}</pre>
+            </div>
+          `;
+        });
+        
+      } catch (error) {
+        output.innerHTML = `
+          <div class="card">
+            <h3>❌ Error</h3>
+            <p>${error.message}</p>
+            <p>Make sure the server is running (npm start)</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Auto-load on page load
+    loadTables();
+  </script>
+</body>
+</html>
