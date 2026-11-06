@@ -1,4 +1,4 @@
-require('dotenv').config();
+const config = require('./config');
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -11,18 +11,24 @@ const QRCode = require('qrcode');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
-const PUBLIC_URL = process.env.PUBLIC_URL || 'http://localhost:3000';
+const { PORT, JWT_SECRET, PUBLIC_URL, UPLOADS_DIR, QR_DIR, PUBLIC_DIR } = config;
+const bootstrap = require('./scripts/bootstrap');
 
-// Initialize database with promisified methods
-const db = new sqlite3.Database('pools-arena.db', (err) => {
-  if (err) console.error('Database error:', err);
-  else {
-    console.log('Database connected');
-    db.run('PRAGMA foreign_keys = ON');
+// Initialize database (schema/seed handled by bootstrap() before listen)
+const db = new sqlite3.Database(config.DB_PATH, (err) => {
+  if (err) {
+    console.error('Database error:', err);
+    process.exit(1);
   }
+  console.log('Database connected: ' + config.DB_PATH);
 });
+
+// Delete a stored "/uploads/..." file from disk (bundled /media/... files are never touched)
+const removeUploadedFile = (url) => {
+  if (!url || !url.startsWith('/uploads/')) return;
+  const file = path.join(UPLOADS_DIR, path.basename(url));
+  if (fs.existsSync(file)) fs.unlinkSync(file);
+};
 
 // Database helper functions
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
@@ -39,6 +45,9 @@ const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
   });
 });
 
+// Running behind a reverse proxy (Caddy)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -47,9 +56,8 @@ app.use(express.urlencoded({ extended: true }));
 // File upload configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = 'uploads';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
+    if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    cb(null, UPLOADS_DIR);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
@@ -82,6 +90,11 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Health check (used by Docker)
+app.get('/healthz', (req, res) => {
+  db.get('SELECT 1', (err) => err ? res.status(500).json({ ok: false }) : res.json({ ok: true }));
+});
+
 // Serve staff login page (BEFORE static middleware)
 app.get('/staff/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'staff', 'login.html'));
@@ -102,9 +115,9 @@ app.get('/admin/*', (req, res) => {
 });
 
 // Static file serving (AFTER specific routes)
-app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
-app.use('/qr-codes', express.static('qr-codes'));
+app.use(express.static(PUBLIC_DIR));
+app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/qr-codes', express.static(QR_DIR));
 
 // PUBLIC ROUTES
 app.get('/api/business-info', async (req, res) => {
@@ -509,9 +522,7 @@ app.put('/api/staff/menu/:id', authenticateToken, upload.single('image'), async 
     let image_url = item.image_url;
     if (req.file) {
       image_url = '/uploads/' + req.file.filename;
-      if (item.image_url && fs.existsSync('public' + item.image_url)) {
-        fs.unlinkSync('public' + item.image_url);
-      }
+      removeUploadedFile(item.image_url);
     }
     
     await dbRun(
@@ -528,9 +539,7 @@ app.put('/api/staff/menu/:id', authenticateToken, upload.single('image'), async 
 app.delete('/api/staff/menu/:id', authenticateToken, async (req, res) => {
   try {
     const item = await dbGet('SELECT * FROM menu_items WHERE id = ?', [req.params.id]);
-    if (item?.image_url && fs.existsSync('public' + item.image_url)) {
-      fs.unlinkSync('public' + item.image_url);
-    }
+    removeUploadedFile(item?.image_url);
     
     await dbRun('DELETE FROM menu_items WHERE id = ?', [req.params.id]);
     res.json({ message: 'Menu item deleted' });
@@ -571,8 +580,9 @@ app.put('/api/staff/resources/:id', authenticateToken, async (req, res) => {
 app.delete('/api/staff/resources/:id', authenticateToken, async (req, res) => {
   try {
     const resource = await dbGet('SELECT qr_code_url FROM resources WHERE id = ?', [req.params.id]);
-    if (resource?.qr_code_url && fs.existsSync(resource.qr_code_url.replace(/^\//, ''))) {
-      fs.unlinkSync(resource.qr_code_url.replace(/^\//, ''));
+    if (resource?.qr_code_url) {
+      const qrFile = path.join(QR_DIR, path.basename(resource.qr_code_url));
+      if (fs.existsSync(qrFile)) fs.unlinkSync(qrFile);
     }
     
     await dbRun('DELETE FROM resources WHERE id = ?', [req.params.id]);
@@ -587,7 +597,7 @@ app.post('/api/staff/resources/:id/generate-qr', authenticateToken, async (req, 
     const resource = await dbGet('SELECT * FROM resources WHERE id = ?', [req.params.id]);
     if (!resource) return res.status(404).json({ error: 'Not found' });
     
-    const qrDir = 'qr-codes';
+    const qrDir = QR_DIR;
     if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
     
     const qrUrl = PUBLIC_URL + '?table=' + resource.id;
@@ -727,11 +737,8 @@ app.delete('/api/staff/media/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Media not found' });
     }
     
-    // Delete file from filesystem
-    const filePath = 'public' + media.file_path;
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    // Delete uploaded file from filesystem
+    removeUploadedFile(media.file_path);
     
     // Delete from database
     await dbRun('DELETE FROM website_media WHERE id = ?', [req.params.id]);
@@ -791,8 +798,27 @@ app.post('/api/reservations', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log('\n?? Pool\'s Arena Server Running');
-  console.log('?? Local: http://localhost:' + PORT);
-  console.log('?? Admin: http://localhost:' + PORT + '/admin\n');
-});
+// Start: prepare the database (schema, seed, owner), then listen
+let server;
+bootstrap(db)
+  .then(() => {
+    server = app.listen(PORT, () => {
+      console.log("\nPool's Arena server running on port " + PORT);
+      console.log('Public URL:  ' + PUBLIC_URL);
+      console.log('Staff login: ' + PUBLIC_URL + '/staff/login\n');
+    });
+  })
+  .catch((err) => {
+    console.error('Startup failed:', err);
+    process.exit(1);
+  });
+
+// Graceful shutdown (docker stop sends SIGTERM)
+const shutdown = (signal) => {
+  console.log(signal + ' received, shutting down...');
+  const closeDb = () => db.close(() => process.exit(0));
+  server ? server.close(closeDb) : closeDb();
+  setTimeout(() => process.exit(0), 10000).unref();
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

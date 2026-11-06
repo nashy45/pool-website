@@ -1,0 +1,7 @@
+# SITE_ADDRESS comes from .env:
+#   production:  SITE_ADDRESS=poolsarena.com, www.poolsarena.com   (automatic HTTPS + HTTP->HTTPS redirect)
+#   HTTP test:   SITE_ADDRESS=:80                                  (before DNS points at the server)
+{$SITE_ADDRESS} {
+	encode gzip
+	reverse_proxy app:3000
+}

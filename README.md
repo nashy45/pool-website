@@ -25,119 +25,52 @@ Complete full-stack website with customer ordering, table reservations, and comp
 ## Technology Stack
 
 - **Backend**: Node.js + Express
-- **Database**: SQLite (better-sqlite3)
+- **Database**: SQLite (sqlite3)
 - **Authentication**: JWT + bcryptjs
 - **File Uploads**: Multer
 - **QR Codes**: qrcode library
 - **Frontend**: Vanilla HTML/CSS/JavaScript (no framework dependencies)
 
-## Installation & Setup
+## Running the App
 
-### 1. Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
+The server sets itself up on every start: it creates the database schema, seeds the bar menu and the default tables (only into empty tables), and creates the owner account from `ADMIN_USERNAME` / `ADMIN_PASSWORD` if no staff account exists yet. There are no manual setup steps.
 
-### 2. Install Dependencies
+### Production (EC2 / any Linux server) — one command
+```bash
+cp .env.example .env      # set JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
+docker compose up -d --build
+```
+This starts the Node app and Caddy (reverse proxy with automatic HTTPS for poolsarena.com). See **[DEPLOY.md](DEPLOY.md)** for the full EC2 runbook (DNS, security group, updates, backups).
+
+### Local development
 ```bash
 npm install
+npm start            # or: npm run dev  (auto-reload)
 ```
+Without a `.env` it runs on http://localhost:3000 with development defaults (data stored in the project folder). Set `ADMIN_USERNAME`/`ADMIN_PASSWORD` in `.env`, or run `npm run create-admin`, to get a staff login.
 
-### 3. Configure Environment
-```bash
-# Copy the example environment file
-copy .env.example .env
-
-# Edit .env and set:
-# - JWT_SECRET to a secure random string
-# - PUBLIC_URL to your domain (for QR codes)
-# - Other business details as needed
-```
-
-### 4. Initialize Database
-```bash
-npm run init-db
-```
-
-This creates the SQLite database with all necessary tables.
-
-### 5. Create Owner Account
-```bash
-npm run create-admin
-```
-
-Follow the prompts to create your owner/admin account.
-
-### 6. Create Required Directories
-```bash
-mkdir uploads
-mkdir qr-codes
-```
-
-### 7. Start the Server
-```bash
-# Production
-npm start
-
-# Development (with auto-reload)
-npm run dev
-```
-
-The server will start on port 3000 (or the PORT specified in .env).
+### Useful scripts
+| Command | Purpose |
+|---|---|
+| `npm start` | Bootstrap DB + start server |
+| `npm run bootstrap` | Bootstrap DB only (idempotent) |
+| `npm run create-admin` | Interactively add another owner account |
 
 ## Accessing the Application
 
-- **Customer Website**: http://localhost:3000
-- **Owner Dashboard**: http://localhost:3000/admin
+- **Customer Website**: `/`
+- **Staff Dashboard**: `/staff/login`
 
-## Deployment
+### After first deploy
+1. Log in at `/staff/login` and change the owner password
+2. Set MTN MoMo / Orange Money merchant codes in Settings
+3. Review menu prices and tables, then generate and print the table QR codes
+4. Back up data regularly (see DEPLOY.md)
 
-### Option 1: VPS or Cloud Server (Recommended)
-
-1. Choose a hosting provider (DigitalOcean, Linode, AWS EC2, etc.)
-2. Set up a Linux server (Ubuntu recommended)
-3. Install Node.js and npm
-4. Clone/upload your code
-5. Set up a process manager (PM2):
-   ```bash
-   npm install -g pm2
-   pm2 start server.js --name pools-arena
-   pm2 startup
-   pm2 save
-   ```
-6. Set up Nginx as reverse proxy with SSL:
-   ```bash
-   sudo apt install nginx certbot python3-certbot-nginx
-   ```
-7. Configure domain and obtain SSL certificate:
-   ```bash
-   sudo certbot --nginx -d yourdomain.com
-   ```
-
-### Option 2: Platform as a Service (PaaS)
-
-Deploy to platforms like:
-- **Render** (Easy, free tier available)
-- **Railway** (Simple deployment)
-- **Heroku** (Well-documented)
-
-Each platform has specific deployment instructions. Generally:
-1. Connect your Git repository
-2. Set environment variables
-3. Deploy
-
-### Important Production Steps
-
-1. **Set Secure JWT_SECRET**: Generate a strong random string
-2. **Set PUBLIC_URL**: Your actual domain (for QR codes)
-3. **Use HTTPS**: Essential for security
-4. **Backup Database**: Regularly backup the `pools-arena.db` file
-5. **Set Merchant Codes**: Add payment codes via admin dashboard
-6. **Add Menu Items**: Populate your actual menu
-7. **Configure Tables**: Set up pool tables, dining tables
 
 ## QR Code Table Ordering
 
-1. Go to Admin Dashboard → Tables
+1. Go to Staff Dashboard → Tables
 2. Add tables (pool tables, dining tables)
 3. Generate QR codes for each table
 4. Download and print QR codes

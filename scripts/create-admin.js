@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const readline = require('readline');
-const path = require('path');
+const config = require('../config');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -37,7 +37,7 @@ async function createAdmin() {
   rl.close();
 
   try {
-    const dbPath = path.join(__dirname, '..', 'pools-arena.db');
+    const dbPath = config.DB_PATH;
     const db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         console.error('❌ Error opening database:', err.message);
@@ -61,7 +61,7 @@ async function createAdmin() {
             console.log('\n✓ Owner account created successfully!');
             console.log(`✓ Username: ${username}`);
             console.log(`✓ User ID: ${this.lastID}`);
-            console.log('\nYou can now log in at: http://localhost:3000/admin');
+            console.log('\nYou can now log in at: ' + config.PUBLIC_URL + '/staff/login');
           }
           
           db.close();

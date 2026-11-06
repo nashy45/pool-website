@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+*.db
+uploads
+qr-codes
+*.md
+!public/**/*.md
+Dockerfile
+docker-compose.yml
+Caddyfile
+.DS_Store
+Thumbs.db
