@@ -4,6 +4,108 @@ let businessSettings = {};
 let currentReservationType = 'pool_table';
 let currentLanguage = 'en';
 
+const productMenuImages = {
+  'absolut vodka': '/media/products/absolut-vodka.jpg',
+  baileys: '/media/products/baileys.jpg',
+  ballantines: '/media/products/ballantines.jpg',
+  'belvedere vodka': '/media/products/belvedere-vodka.jpg',
+  'belaire rose': '/media/products/belaire-rose-user.png',
+  'chivas 12 year': '/media/products/chivas-regal.jpg',
+  'chivas 12 year 1l': '/media/products/chivas-regal.jpg',
+  'chivas regal': '/media/products/chivas-regal.jpg',
+  'chivas 25 year': '/media/products/chivas-regal-25.jpg',
+  'chivas 25 years': '/media/products/chivas-regal-25.jpg',
+  'chivas 18 years 70cl': '/media/products/chivas-regal-18-user.png',
+  'chivas 18 year': '/media/products/chivas-regal-18-user.png',
+  ciroc: '/media/products/ciroc-user.png',
+  'ciroc magnum': '/media/products/ciroc-blue-steel-user.png',
+  'black label': '/media/products/johnnie-walker-black-label-user.png',
+  'black label jw': '/media/products/johnnie-walker-black-label-user.png',
+  'black label 1l jw': '/media/products/johnnie-walker-black-label-user.png',
+  'double black 1l': '/media/products/johnnie-walker-double-black.jpg',
+  'blue label': '/media/products/johnnie-walker-blue-label.jpg',
+  'blue label 1l': '/media/products/johnnie-walker-blue-label.jpg',
+  'gold label jw': '/media/products/johnnie-walker-gold-label.jpg',
+  campari: '/media/products/campari.jpg',
+  'don julio': '/media/products/don-julio.jpg',
+  'don julio 1942': '/media/products/don-julio-1942-user.png',
+  'don julio long bottle': '/media/products/don-julio-1942-long-bottle-user.png',
+  'shisha - ice lemon': '/media/products/shisha-ice-lemon-user.png',
+  'shisha - love 66': '/media/products/shisha-love-66-user.png',
+  'shisha - mango tango': '/media/products/shisha-mango-tango-user.png',
+  martell: '/media/products/martell.jpg',
+  'martell blue swift': '/media/products/martell-blue-swift-user.png',
+  'hennessy x.o 70cl': '/media/products/hennessy-xo.jpg',
+  'hennessy x.o': '/media/products/hennessy-xo.jpg',
+  'hennessy xo': '/media/products/hennessy-xo.jpg',
+  'hennessy v.s.o.p': '/media/products/hennessy-vsop.jpg',
+  'hennessy vsop': '/media/products/hennessy-vsop.jpg',
+  'hennessy vs': '/media/products/hennessy-vs.jpg',
+  'hennessy x.x.o': '/media/products/hennessy-xxo.jpg',
+  'hennessy xxo': '/media/products/hennessy-xxo.jpg',
+  hennessy: '/media/products/hennessy-vs.jpg',
+  'jack daniels': '/media/products/jack-daniels.jpg',
+  'glenmorangie 10 year': '/media/products/glenmorangie-10.jpg',
+  'glenmorangie 12 year': '/media/products/glenmorangie-lasanta-12.jpg',
+  'glenmorangie 14 years': '/media/products/glenmorangie-14.jpg',
+  'glenmorangie 18 years': '/media/products/glenmorangie-18-user.png',
+  'jonny walker 18 years': '/media/products/johnnie-walker-gold-18.jpg',
+  'johnnie walker 18 years': '/media/products/johnnie-walker-gold-18.jpg',
+  'tia maria': '/media/products/tia-maria.jpg',
+  cristal: '/media/products/cristal-champagne.jpg',
+  crystal: '/media/products/cristal-champagne.jpg',
+  'veuve clicquot brut': '/media/products/veuve-clicquot-brut-user.png',
+  'veuve cliquot brut': '/media/products/veuve-clicquot.jpg',
+  'grey goose': '/media/products/grey-goose.jpg',
+  'monkey 47': '/media/products/monkey-47.jpg',
+  'monkey shoulder': '/media/products/monkey-shoulder.jpg',
+  'remy martin vsop': '/media/products/remy-martin-vsop.jpg',
+  'remy martin xo': '/media/products/remy-martin-xo.jpg',
+  ruinart: '/media/products/ruinart.jpg',
+  'ruinart blanc': '/media/products/ruinart-blanc-white-user.png',
+  'ruinard blanc': '/media/products/ruinart-blanc-glass-user.png',
+  'ruinard brut': '/media/products/ruinart.jpg',
+  ruinard: '/media/products/ruinart.jpg',
+  'don julio reposado': '/media/products/don-julio-reposado.jpg',
+  'piper heidsieck': '/media/products/piper-heidsieck.jpg',
+  pizzolato: '/media/products/pizzolato-rose-user.png',
+  troullard: '/media/products/trouillard-blanc-de-blancs-user.png',
+  'veuve de vernay': '/media/products/veuve-de-vernay-rose-user.png',
+  'blu nun': '/media/products/blue-nun.jpg',
+  'blue nun': '/media/products/blue-nun.jpg',
+  'gordon gin': '/media/products/gordon-gin.jpg',
+  brugal: '/media/products/brugal-anejo-user.png',
+  patron: '/media/products/patron-platinum-silver-user.png',
+  'armand de brignac': '/media/products/armand-de-brignac.jpg',
+  'ace of spade': '/media/products/armand-de-brignac.jpg',
+  'armand de brignac gold': '/media/products/armand-de-brignac.jpg',
+  'armand de brignac rose': '/media/products/armand-de-brignac-rose-user.png',
+  'bellaire rose light': '/media/products/belaire-luxe-rose-user.png',
+  'don perignon': '/media/products/dom-perignon.jpg',
+  moet: '/media/products/moet-chandon.jpg',
+  'moet brut': '/media/products/moet-imperial-brut-user.png',
+  'moet brut 1.5l': '/media/products/moet-chandon.jpg',
+  'moet magnum': '/media/products/moet-chandon.jpg',
+  'moet rose': '/media/products/moet-rose-imperial-user.png',
+  'moet rose magnum': '/media/products/moet-rose-magnum-user.png',
+  azur: '/media/products/azur-sables-azur-user.png',
+  'volcan xa': '/media/products/volcan-xa-user.png',
+  'veuve clicquot': '/media/products/veuve-clicquot.jpg',
+  'veuve cliquot': '/media/products/veuve-clicquot.jpg',
+  'veuve rose': '/media/products/veuve-clicquot-rose.jpg',
+  'bella luna': '/media/products/nonalcoholic-blue-user.png',
+  'fruit punch': '/media/products/nonalcoholic-cherry-user.png',
+  mojito: '/media/products/nonalcoholic-lime-user.png',
+  'special mix': '/media/products/nonalcoholic-assorted-user.png',
+  dolcevita: '/media/products/cocktail-dolcevita-user.png',
+  'my way': '/media/products/cocktail-my-way-user.png',
+  mikadonia: '/media/products/cocktail-mikadonia-user.png',
+  zanzilmood: '/media/products/cocktail-zanzilmood-user.png',
+  'mojito exotique': '/media/products/cocktail-mojito-exotique-user.png',
+  'pina canada': '/media/products/cocktail-pina-colada-user.png',
+  'sex on the beach': '/media/products/cocktail-sex-on-the-beach-user.png'
+};
+
 const translations = {
   en: {
     toggleNavigation: 'Toggle navigation',
@@ -422,8 +524,8 @@ async function loadMenu() {
             ${category.items.map(item => `
               <div class="menu-item">
                 <div class="menu-item-image">
-                  ${item.image_url 
-                    ? `<img src="${item.image_url}" alt="${item.name}">`
+                  ${getMenuItemImage(item)
+                    ? `<img src="${getMenuItemImage(item)}" alt="${item.name}">`
                     : `<span>${getCategoryEmoji(category.name)}</span>`
                   }
                 </div>
@@ -449,6 +551,7 @@ async function loadMenu() {
       `;
     }).join('');
     
+    menuContainer.classList.remove('menu-loading');
     menuContainer.innerHTML = `<div class="menu-categories">${menuHTML}</div>`;
   } catch (error) {
     console.error('Error loading menu:', error);
@@ -463,6 +566,10 @@ async function loadMenu() {
 function translateCategory(name) {
   const categoryKeys = { Meals: 'meals', Snacks: 'snacks', Drinks: 'drinks' };
   return categoryKeys[name] ? translate(categoryKeys[name]) : name;
+}
+
+function getMenuItemImage(item) {
+  return item.image_url || productMenuImages[item.name.trim().toLowerCase()];
 }
 
 function getCategoryEmoji(category) {
