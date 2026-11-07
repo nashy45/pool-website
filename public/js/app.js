@@ -2,9 +2,310 @@
 let cart = [];
 let businessSettings = {};
 let currentReservationType = 'pool_table';
+let currentLanguage = 'en';
+
+const productMenuImages = {
+  'absolut vodka': '/media/products/absolut-vodka.jpg',
+  baileys: '/media/products/baileys.jpg',
+  ballantines: '/media/products/ballantines.jpg',
+  'belvedere vodka': '/media/products/belvedere-vodka.jpg',
+  'belaire rose': '/media/products/belaire-rose-user.png',
+  'chivas 12 year': '/media/products/chivas-regal.jpg',
+  'chivas 12 year 1l': '/media/products/chivas-regal.jpg',
+  'chivas regal': '/media/products/chivas-regal.jpg',
+  'chivas 25 year': '/media/products/chivas-regal-25.jpg',
+  'chivas 25 years': '/media/products/chivas-regal-25.jpg',
+  'chivas 18 years 70cl': '/media/products/chivas-regal-18-user.png',
+  'chivas 18 year': '/media/products/chivas-regal-18-user.png',
+  ciroc: '/media/products/ciroc-user.png',
+  'ciroc magnum': '/media/products/ciroc-blue-steel-user.png',
+  'black label': '/media/products/johnnie-walker-black-label-user.png',
+  'black label jw': '/media/products/johnnie-walker-black-label-user.png',
+  'black label 1l jw': '/media/products/johnnie-walker-black-label-user.png',
+  'double black 1l': '/media/products/johnnie-walker-double-black.jpg',
+  'blue label': '/media/products/johnnie-walker-blue-label.jpg',
+  'blue label 1l': '/media/products/johnnie-walker-blue-label.jpg',
+  'gold label jw': '/media/products/johnnie-walker-gold-label.jpg',
+  campari: '/media/products/campari.jpg',
+  'don julio': '/media/products/don-julio.jpg',
+  'don julio 1942': '/media/products/don-julio-1942-user.png',
+  'don julio long bottle': '/media/products/don-julio-1942-long-bottle-user.png',
+  'shisha - ice lemon': '/media/products/shisha-ice-lemon-user.png',
+  'shisha - love 66': '/media/products/shisha-love-66-user.png',
+  'shisha - mango tango': '/media/products/shisha-mango-tango-user.png',
+  martell: '/media/products/martell.jpg',
+  'martell blue swift': '/media/products/martell-blue-swift-user.png',
+  'hennessy x.o 70cl': '/media/products/hennessy-xo.jpg',
+  'hennessy x.o': '/media/products/hennessy-xo.jpg',
+  'hennessy xo': '/media/products/hennessy-xo.jpg',
+  'hennessy v.s.o.p': '/media/products/hennessy-vsop.jpg',
+  'hennessy vsop': '/media/products/hennessy-vsop.jpg',
+  'hennessy vs': '/media/products/hennessy-vs.jpg',
+  'hennessy x.x.o': '/media/products/hennessy-xxo.jpg',
+  'hennessy xxo': '/media/products/hennessy-xxo.jpg',
+  hennessy: '/media/products/hennessy-vs.jpg',
+  'jack daniels': '/media/products/jack-daniels.jpg',
+  'glenmorangie 10 year': '/media/products/glenmorangie-10.jpg',
+  'glenmorangie 12 year': '/media/products/glenmorangie-lasanta-12.jpg',
+  'glenmorangie 14 years': '/media/products/glenmorangie-14.jpg',
+  'glenmorangie 18 years': '/media/products/glenmorangie-18-user.png',
+  'jonny walker 18 years': '/media/products/johnnie-walker-gold-18.jpg',
+  'johnnie walker 18 years': '/media/products/johnnie-walker-gold-18.jpg',
+  'tia maria': '/media/products/tia-maria.jpg',
+  cristal: '/media/products/cristal-champagne.jpg',
+  crystal: '/media/products/cristal-champagne.jpg',
+  'veuve clicquot brut': '/media/products/veuve-clicquot-brut-user.png',
+  'veuve cliquot brut': '/media/products/veuve-clicquot.jpg',
+  'grey goose': '/media/products/grey-goose.jpg',
+  'monkey 47': '/media/products/monkey-47.jpg',
+  'monkey shoulder': '/media/products/monkey-shoulder.jpg',
+  'remy martin vsop': '/media/products/remy-martin-vsop.jpg',
+  'remy martin xo': '/media/products/remy-martin-xo.jpg',
+  ruinart: '/media/products/ruinart.jpg',
+  'ruinart blanc': '/media/products/ruinart-blanc-white-user.png',
+  'ruinard blanc': '/media/products/ruinart-blanc-glass-user.png',
+  'ruinard brut': '/media/products/ruinart.jpg',
+  ruinard: '/media/products/ruinart.jpg',
+  'don julio reposado': '/media/products/don-julio-reposado.jpg',
+  'piper heidsieck': '/media/products/piper-heidsieck.jpg',
+  pizzolato: '/media/products/pizzolato-rose-user.png',
+  troullard: '/media/products/trouillard-blanc-de-blancs-user.png',
+  'veuve de vernay': '/media/products/veuve-de-vernay-rose-user.png',
+  'blu nun': '/media/products/blue-nun.jpg',
+  'blue nun': '/media/products/blue-nun.jpg',
+  'gordon gin': '/media/products/gordon-gin.jpg',
+  brugal: '/media/products/brugal-anejo-user.png',
+  patron: '/media/products/patron-platinum-silver-user.png',
+  'armand de brignac': '/media/products/armand-de-brignac.jpg',
+  'ace of spade': '/media/products/armand-de-brignac.jpg',
+  'armand de brignac gold': '/media/products/armand-de-brignac.jpg',
+  'armand de brignac rose': '/media/products/armand-de-brignac-rose-user.png',
+  'bellaire rose light': '/media/products/belaire-luxe-rose-user.png',
+  'don perignon': '/media/products/dom-perignon.jpg',
+  moet: '/media/products/moet-chandon.jpg',
+  'moet brut': '/media/products/moet-imperial-brut-user.png',
+  'moet brut 1.5l': '/media/products/moet-chandon.jpg',
+  'moet magnum': '/media/products/moet-chandon.jpg',
+  'moet rose': '/media/products/moet-rose-imperial-user.png',
+  'moet rose magnum': '/media/products/moet-rose-magnum-user.png',
+  azur: '/media/products/azur-sables-azur-user.png',
+  'volcan xa': '/media/products/volcan-xa-user.png',
+  'veuve clicquot': '/media/products/veuve-clicquot.jpg',
+  'veuve cliquot': '/media/products/veuve-clicquot.jpg',
+  'veuve rose': '/media/products/veuve-clicquot-rose.jpg',
+  'bella luna': '/media/products/nonalcoholic-blue-user.png',
+  'fruit punch': '/media/products/nonalcoholic-cherry-user.png',
+  mojito: '/media/products/nonalcoholic-lime-user.png',
+  'special mix': '/media/products/nonalcoholic-assorted-user.png',
+  dolcevita: '/media/products/cocktail-dolcevita-user.png',
+  'my way': '/media/products/cocktail-my-way-user.png',
+  mikadonia: '/media/products/cocktail-mikadonia-user.png',
+  zanzilmood: '/media/products/cocktail-zanzilmood-user.png',
+  'mojito exotique': '/media/products/cocktail-mojito-exotique-user.png',
+  'pina canada': '/media/products/cocktail-pina-colada-user.png',
+  'sex on the beach': '/media/products/cocktail-sex-on-the-beach-user.png'
+};
+
+const translations = {
+  en: {
+    toggleNavigation: 'Toggle navigation',
+    switchTheme: 'Switch to {theme} mode',
+    lightMode: 'Light',
+    darkMode: 'Dark',
+    selectLanguage: 'Select language',
+    home: 'Home',
+    menu: 'Menu',
+    reservations: 'Reservations',
+    contact: 'Contact',
+    tagline: 'Play • Eat • Drink • Relax',
+    viewMenu: 'View Menu',
+    orderNow: 'Order Now',
+    makeReservation: 'Make a Reservation',
+    heroLocation: 'Bonabéri, Douala • Behind Ancien Sonel',
+    pauseVideo: 'Pause background video',
+    barSnacks: 'Bar & Snacks',
+    premiumDrinksSnacks: 'Premium drinks and delicious snacks',
+    restaurant: 'Restaurant',
+    freshMeals: 'Fresh meals and local cuisine',
+    poolSnooker: 'Pool/Snooker',
+    professionalTables: 'Professional pool tables',
+    meals: 'Meals',
+    snacks: 'Snacks',
+    drinks: 'Drinks',
+    premiumSelection: 'Our Premium Selection',
+    menuSubtitle: 'Finest Spirits, Champagnes & Cocktails',
+    orderingFor: 'You are ordering for',
+    loadingMenu: 'Loading menu...',
+    menuUpdating: 'Menu is being updated. Please check back soon!',
+    menuLoadError: 'Error loading menu. Please refresh the page.',
+    daysPerWeek: '7 days a week',
+    poolTable: 'Pool Table',
+    diningTable: 'Dining Table',
+    eventGroup: 'Event/Group',
+    yourName: 'Your Name *',
+    phoneNumber: 'Phone Number *',
+    selectTableSpace: 'Select Table/Space *',
+    choose: 'Choose...',
+    date: 'Date *',
+    startTime: 'Start Time *',
+    durationMinutes: 'Duration (minutes) *',
+    minutes30: '30 minutes',
+    hour1: '1 hour',
+    hours1Half: '1.5 hours',
+    hours2: '2 hours',
+    hours3: '3 hours',
+    hours4: '4 hours',
+    groupSize: 'Group Size *',
+    specialRequests: 'Special Requests',
+    submitReservation: 'Submit Reservation',
+    findUs: 'Find Us',
+    location: 'Location',
+    businessLocationFallback: 'Bonabéri, Douala, behind Ancien Sonel',
+    phone: 'Phone',
+    openingHours: 'Opening Hours',
+    opensAt: 'Opens at',
+    copyright: '© 2026 Pool\'s Arena Club & Bar. All rights reserved.',
+    yourOrder: 'Your Order',
+    total: 'Total:',
+    continueShopping: 'Continue Shopping',
+    checkout: 'Checkout',
+    completeOrder: 'Complete Your Order',
+    paymentMethod: 'Payment Method *',
+    selectPaymentMethod: 'Select payment method',
+    mtnMoney: 'MTN Mobile Money',
+    orangeMoney: 'Orange Money / Max it',
+    specialInstructions: 'Special Instructions',
+    totalAmount: 'Total Amount:',
+    placeOrder: 'Place Order',
+    success: '✓ Success!',
+    close: 'Close',
+    order: 'Order',
+    reserve: 'Reserve',
+    addToCart: '🛒 Add to Cart',
+    soldOut: '❌ Sold Out',
+    added: '✓ Added!',
+    cartEmpty: 'Your cart is empty',
+    noTablesAvailable: 'No tables available',
+    capacity: 'Capacity',
+    checkoutEmpty: 'Your cart is empty',
+    orderPlaced: 'Order Placed Successfully!',
+    paymentInstructions: 'Payment Instructions',
+    enterAmount: 'Enter amount:',
+    completePayment: 'Complete the payment',
+    orderConfirmation: 'Your order will be confirmed once payment is received.',
+    payAtVenue: 'Pay at Venue',
+    payWhenReceived: 'Please pay {amount} FCFA when you receive your order.',
+    showOrderNumber: 'Show your order number to the staff.',
+    reservationSubmitted: 'Reservation Submitted!',
+    contactToConfirm: 'We will contact you at {phone} to confirm your reservation.',
+    noAvailability: 'Sorry, this time slot is not available. Please choose a different time.',
+    orderFailed: 'Failed to place order',
+    orderFailedRetry: 'Failed to place order. Please try again.',
+    reservationFailed: 'Failed to create reservation',
+    reservationFailedRetry: 'Failed to create reservation. Please try again.'
+  },
+  fr: {
+    toggleNavigation: 'Afficher ou masquer la navigation',
+    switchTheme: 'Passer en mode {theme}',
+    lightMode: 'Clair',
+    darkMode: 'Sombre',
+    selectLanguage: 'Choisir la langue',
+    home: 'Accueil',
+    menu: 'Menu',
+    reservations: 'Réservations',
+    contact: 'Contact',
+    tagline: 'Jouer • Manger • Boire • Se détendre',
+    viewMenu: 'Voir le menu',
+    orderNow: 'Commander',
+    makeReservation: 'Faire une réservation',
+    heroLocation: 'Bonabéri, Douala • Derrière Ancien Sonel',
+    pauseVideo: 'Mettre la vidéo en pause',
+    barSnacks: 'Bar et snacks',
+    premiumDrinksSnacks: 'Boissons de qualité et délicieux snacks',
+    restaurant: 'Restaurant',
+    freshMeals: 'Plats frais et cuisine locale',
+    poolSnooker: 'Billard',
+    professionalTables: 'Tables de billard professionnelles',
+    meals: 'Plats',
+    snacks: 'Snacks',
+    drinks: 'Boissons',
+    premiumSelection: 'Notre sélection de qualité',
+    menuSubtitle: 'Spiritueux, champagnes et cocktails de qualité',
+    orderingFor: 'Votre commande est pour',
+    loadingMenu: 'Chargement du menu...',
+    menuUpdating: 'Le menu est en cours de mise à jour. Revenez bientôt !',
+    menuLoadError: 'Erreur lors du chargement du menu. Veuillez actualiser la page.',
+    daysPerWeek: '7 jours sur 7',
+    poolTable: 'Table de billard',
+    diningTable: 'Table de restaurant',
+    eventGroup: 'Événement / Groupe',
+    yourName: 'Votre nom *',
+    phoneNumber: 'Numéro de téléphone *',
+    selectTableSpace: 'Choisir une table/un espace *',
+    choose: 'Choisir...',
+    date: 'Date *',
+    startTime: 'Heure de début *',
+    durationMinutes: 'Durée (minutes) *',
+    minutes30: '30 minutes',
+    hour1: '1 heure',
+    hours1Half: '1,5 heure',
+    hours2: '2 heures',
+    hours3: '3 heures',
+    hours4: '4 heures',
+    groupSize: 'Taille du groupe *',
+    specialRequests: 'Demandes particulières',
+    submitReservation: 'Envoyer la réservation',
+    findUs: 'Nous trouver',
+    location: 'Adresse',
+    businessLocationFallback: 'Bonabéri, Douala, derrière Ancien Sonel',
+    phone: 'Téléphone',
+    openingHours: 'Heures d’ouverture',
+    opensAt: 'Ouverture à',
+    copyright: '© 2026 Pool\'s Arena Club & Bar. Tous droits réservés.',
+    yourOrder: 'Votre commande',
+    total: 'Total :',
+    continueShopping: 'Continuer vos achats',
+    checkout: 'Valider la commande',
+    completeOrder: 'Finaliser votre commande',
+    paymentMethod: 'Mode de paiement *',
+    selectPaymentMethod: 'Choisir un mode de paiement',
+    mtnMoney: 'MTN Mobile Money',
+    orangeMoney: 'Orange Money / Max it',
+    specialInstructions: 'Instructions particulières',
+    totalAmount: 'Montant total :',
+    placeOrder: 'Passer la commande',
+    success: '✓ Réussite !',
+    close: 'Fermer',
+    order: 'Commander',
+    reserve: 'Réserver',
+    addToCart: '🛒 Ajouter au panier',
+    soldOut: '❌ Épuisé',
+    added: '✓ Ajouté !',
+    cartEmpty: 'Votre panier est vide',
+    noTablesAvailable: 'Aucune table disponible',
+    capacity: 'Capacité',
+    checkoutEmpty: 'Votre panier est vide',
+    orderPlaced: 'Commande passée avec succès !',
+    paymentInstructions: 'Instructions de paiement',
+    enterAmount: 'Saisissez le montant :',
+    completePayment: 'Finalisez le paiement',
+    orderConfirmation: 'Votre commande sera confirmée après réception du paiement.',
+    payAtVenue: 'Paiement sur place',
+    payWhenReceived: 'Veuillez régler {amount} FCFA à la réception de votre commande.',
+    showOrderNumber: 'Présentez votre numéro de commande au personnel.',
+    reservationSubmitted: 'Réservation envoyée !',
+    contactToConfirm: 'Nous vous contacterons au {phone} pour confirmer votre réservation.',
+    noAvailability: 'Désolé, ce créneau est indisponible. Veuillez en choisir un autre.',
+    orderFailed: 'Échec de la commande',
+    orderFailedRetry: 'Échec de la commande. Veuillez réessayer.',
+    reservationFailed: 'Échec de la réservation',
+    reservationFailedRetry: 'Échec de la réservation. Veuillez réessayer.'
+  }
+};
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+  initPreferences();
   loadBusinessInfo();
   loadMenu();
   initNavigation();
@@ -14,6 +315,63 @@ document.addEventListener('DOMContentLoaded', () => {
   initAnimations();
   initStickyNav();
 });
+
+function translate(key, values = {}) {
+  const phrase = translations[currentLanguage][key] || translations.en[key] || key;
+  return phrase.replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
+}
+
+function initPreferences() {
+  const savedLanguage = localStorage.getItem('siteLanguage');
+  const savedTheme = localStorage.getItem('siteTheme');
+  currentLanguage = savedLanguage === 'fr' ? 'fr' : 'en';
+  document.documentElement.dataset.theme = savedTheme === 'light' ? 'light' : 'dark';
+
+  const languageSelect = document.getElementById('languageSelect');
+  languageSelect.value = currentLanguage;
+  languageSelect.addEventListener('change', () => {
+    currentLanguage = languageSelect.value === 'fr' ? 'fr' : 'en';
+    localStorage.setItem('siteLanguage', currentLanguage);
+    applyLanguage();
+  });
+
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('siteTheme', theme);
+    updateThemeControl();
+  });
+
+  applyLanguage();
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLanguage;
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    element.textContent = translate(element.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(element => {
+    element.setAttribute('aria-label', translate(element.dataset.i18nAriaLabel));
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(element => {
+    element.setAttribute('title', translate(element.dataset.i18nTitle));
+  });
+  renderBusinessLocation();
+  renderOpeningHours();
+  updateThemeControl();
+  updateCartUI();
+}
+
+function updateThemeControl() {
+  const isLight = document.documentElement.dataset.theme === 'light';
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.querySelector('[aria-hidden="true"]').textContent = isLight ? '☾' : '☀';
+  themeToggle.querySelector('.theme-toggle-label').textContent =
+    translate(isLight ? 'darkMode' : 'lightMode');
+  themeToggle.setAttribute('aria-label', translate('switchTheme', {
+    theme: translate(isLight ? 'darkMode' : 'lightMode').toLowerCase()
+  }));
+}
 
 // Initialize scroll animations
 function initAnimations() {
@@ -90,30 +448,52 @@ async function loadBusinessInfo() {
     businessSettings = await response.json();
     
     // Update contact info
-    document.getElementById('businessLocation').textContent = businessSettings.location;
+    renderBusinessLocation();
     document.getElementById('businessPhone').textContent = businessSettings.phone;
     document.getElementById('businessPhone').href = `tel:${businessSettings.phone}`;
     
-    if (businessSettings.opening_time) {
-      const [hours, minutes] = businessSettings.opening_time.split(':');
-      const time = new Date();
-      time.setHours(parseInt(hours), parseInt(minutes));
-      document.getElementById('openingTime').textContent = time.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit' 
-      });
-    }
-    
-    if (businessSettings.opening_days) {
-      const days = businessSettings.opening_days.split(',');
-      if (days.length === 7) {
-        document.getElementById('openingDays').textContent = '7 days a week';
-      } else {
-        document.getElementById('openingDays').textContent = days.join(', ');
-      }
-    }
+    renderOpeningHours();
   } catch (error) {
     console.error('Error loading business info:', error);
+  }
+}
+
+function renderBusinessLocation() {
+  const location = businessSettings.location;
+  if (!location) return;
+  const normalizedLocation = location.trim().toLowerCase();
+  const englishDefault = 'bonabéri, douala, behind ancien sonel';
+  document.getElementById('businessLocation').textContent =
+    currentLanguage === 'fr' && normalizedLocation === englishDefault
+      ? 'Bonabéri, Douala, derrière Ancien Sonel'
+      : location;
+}
+
+function renderOpeningHours() {
+  const [hours, minutes] = (businessSettings.opening_time || '18:30').split(':');
+  const time = new Date();
+  time.setHours(parseInt(hours), parseInt(minutes));
+  document.getElementById('openingTime').textContent = time.toLocaleTimeString(
+    currentLanguage === 'fr' ? 'fr-FR' : 'en-US',
+    { hour: 'numeric', minute: '2-digit' }
+  );
+
+  const days = businessSettings.opening_days ? businessSettings.opening_days.split(',') : [];
+  if (days.length === 0 || days.length === 7) {
+    document.getElementById('openingDays').textContent = translate('daysPerWeek');
+  } else {
+    const frenchDays = {
+      Monday: 'lundi',
+      Tuesday: 'mardi',
+      Wednesday: 'mercredi',
+      Thursday: 'jeudi',
+      Friday: 'vendredi',
+      Saturday: 'samedi',
+      Sunday: 'dimanche'
+    };
+    document.getElementById('openingDays').textContent = days
+      .map(day => currentLanguage === 'fr' ? frenchDays[day.trim()] || day : day)
+      .join(', ');
   }
 }
 
@@ -128,7 +508,7 @@ async function loadMenu() {
     if (menu.length === 0 || menu.every(cat => cat.items.length === 0)) {
       menuContainer.innerHTML = `
         <div class="menu-loading">
-          <p>Menu is being updated. Please check back soon!</p>
+          <p>${translate('menuUpdating')}</p>
         </div>
       `;
       return;
@@ -139,13 +519,13 @@ async function loadMenu() {
       
       return `
         <div class="menu-category">
-          <h3>${category.name}</h3>
+          <h3>${translateCategory(category.name)}</h3>
           <div class="menu-items">
             ${category.items.map(item => `
               <div class="menu-item">
                 <div class="menu-item-image">
-                  ${item.image_url 
-                    ? `<img src="${item.image_url}" alt="${item.name}">`
+                  ${getMenuItemImage(item)
+                    ? `<img src="${getMenuItemImage(item)}" alt="${item.name}">`
                     : `<span>${getCategoryEmoji(category.name)}</span>`
                   }
                 </div>
@@ -157,10 +537,11 @@ async function loadMenu() {
                   ${item.description ? `<div class="menu-item-description">${item.description}</div>` : ''}
                   <button 
                     class="add-to-cart-btn" 
+                    data-i18n="${item.is_available ? 'addToCart' : 'soldOut'}"
                     onclick="addToCart(${item.id}, '${item.name}', ${item.price})"
                     ${!item.is_available ? 'disabled' : ''}
                   >
-                    ${item.is_available ? '🛒 Add to Cart' : '❌ Sold Out'}
+                    ${item.is_available ? translate('addToCart') : translate('soldOut')}
                   </button>
                 </div>
               </div>
@@ -170,15 +551,25 @@ async function loadMenu() {
       `;
     }).join('');
     
+    menuContainer.classList.remove('menu-loading');
     menuContainer.innerHTML = `<div class="menu-categories">${menuHTML}</div>`;
   } catch (error) {
     console.error('Error loading menu:', error);
     menuContainer.innerHTML = `
       <div class="menu-loading">
-        <p>Error loading menu. Please refresh the page.</p>
+        <p>${translate('menuLoadError')}</p>
       </div>
     `;
   }
+}
+
+function translateCategory(name) {
+  const categoryKeys = { Meals: 'meals', Snacks: 'snacks', Drinks: 'drinks' };
+  return categoryKeys[name] ? translate(categoryKeys[name]) : name;
+}
+
+function getMenuItemImage(item) {
+  return item.image_url || productMenuImages[item.name.trim().toLowerCase()];
 }
 
 function getCategoryEmoji(category) {
@@ -274,7 +665,7 @@ function addToCart(id, name, price) {
   // Visual feedback with animation
   const btn = event.target;
   const originalText = btn.textContent;
-  btn.textContent = '✓ Added!';
+  btn.textContent = translate('added');
   btn.style.background = 'var(--success)';
   btn.disabled = true;
   
@@ -312,7 +703,7 @@ function updateCartUI() {
   const cartTotal = document.getElementById('cartTotal');
   
   if (cart.length === 0) {
-    cartItems.innerHTML = '<p style="text-align: center; color: var(--light-gray);">Your cart is empty</p>';
+      cartItems.innerHTML = `<p style="text-align: center; color: var(--cream-dark);">${translate('cartEmpty')}</p>`;
     cartTotal.textContent = '0 FCFA';
     return;
   }
@@ -347,7 +738,7 @@ function closeCartModal() {
 
 function openCheckout() {
   if (cart.length === 0) {
-    alert('Your cart is empty');
+    alert(translate('checkoutEmpty'));
     return;
   }
   
@@ -405,54 +796,54 @@ document.getElementById('checkoutForm').addEventListener('submit', async (e) => 
       // Clear selected table
       localStorage.removeItem('selectedTable');
     } else {
-      alert(result.error || 'Failed to place order');
+      alert(result.error || translate('orderFailed'));
     }
   } catch (error) {
     console.error('Error placing order:', error);
-    alert('Failed to place order. Please try again.');
+    alert(translate('orderFailedRetry'));
   }
 });
 
 function showSuccessMessage(result, paymentMethod) {
   let message = `
     <div class="success-icon">✓</div>
-    <h3>Order Placed Successfully!</h3>
+    <h3>${translate('orderPlaced')}</h3>
     <div class="order-number">Order #${result.order_number}</div>
-    <p>Total: ${result.total_amount.toLocaleString()} FCFA</p>
+    <p>${translate('total')} ${result.total_amount.toLocaleString()} FCFA</p>
   `;
   
   if (paymentMethod === 'mtn_momo' && result.merchant_code) {
     message += `
       <div class="payment-instructions">
-        <h4>Payment Instructions - MTN Mobile Money</h4>
-        <p>1. Dial *126# on your MTN phone</p>
-        <p>2. Select "Send Money"</p>
-        <p>3. Enter merchant code:</p>
+        <h4>${translate('paymentInstructions')} - MTN Mobile Money</h4>
+        <p>1. ${currentLanguage === 'fr' ? 'Composez *126# sur votre téléphone MTN' : 'Dial *126# on your MTN phone'}</p>
+        <p>2. ${currentLanguage === 'fr' ? 'Choisissez « Envoyer de l’argent »' : 'Select "Send Money"'}</p>
+        <p>3. ${currentLanguage === 'fr' ? 'Saisissez le code marchand :' : 'Enter merchant code:'}</p>
         <div class="merchant-code">${result.merchant_code}</div>
-        <p>4. Enter amount: ${result.total_amount} FCFA</p>
-        <p>5. Complete the payment</p>
-        <p><small>Your order will be confirmed once payment is received.</small></p>
+        <p>4. ${translate('enterAmount')} ${result.total_amount} FCFA</p>
+        <p>5. ${translate('completePayment')}</p>
+        <p><small>${translate('orderConfirmation')}</small></p>
       </div>
     `;
   } else if (paymentMethod === 'orange_money' && result.merchant_code) {
     message += `
       <div class="payment-instructions">
-        <h4>Payment Instructions - Orange Money / Max it</h4>
-        <p>1. Dial #150# on your Orange phone</p>
-        <p>2. Select "Transfer Money"</p>
-        <p>3. Enter merchant code:</p>
+        <h4>${translate('paymentInstructions')} - Orange Money / Max it</h4>
+        <p>1. ${currentLanguage === 'fr' ? 'Composez #150# sur votre téléphone Orange' : 'Dial #150# on your Orange phone'}</p>
+        <p>2. ${currentLanguage === 'fr' ? 'Choisissez « Transférer de l’argent »' : 'Select "Transfer Money"'}</p>
+        <p>3. ${currentLanguage === 'fr' ? 'Saisissez le code marchand :' : 'Enter merchant code:'}</p>
         <div class="merchant-code">${result.merchant_code}</div>
-        <p>4. Enter amount: ${result.total_amount} FCFA</p>
-        <p>5. Complete the payment</p>
-        <p><small>Your order will be confirmed once payment is received.</small></p>
+        <p>4. ${translate('enterAmount')} ${result.total_amount} FCFA</p>
+        <p>5. ${translate('completePayment')}</p>
+        <p><small>${translate('orderConfirmation')}</small></p>
       </div>
     `;
   } else if (paymentMethod === 'pay_at_venue') {
     message += `
       <div class="payment-instructions">
-        <h4>Pay at Venue</h4>
-        <p>Please pay ${result.total_amount.toLocaleString()} FCFA when you receive your order.</p>
-        <p>Show your order number to the staff.</p>
+        <h4>${translate('payAtVenue')}</h4>
+        <p>${translate('payWhenReceived', { amount: result.total_amount.toLocaleString() })}</p>
+        <p>${translate('showOrderNumber')}</p>
       </div>
     `;
   }
@@ -505,12 +896,12 @@ async function loadResources(type) {
     const select = document.getElementById('resourceSelect');
     
     if (resources.length === 0) {
-      select.innerHTML = '<option value="">No tables available</option>';
+      select.innerHTML = `<option value="">${translate('noTablesAvailable')}</option>`;
       return;
     }
     
-    select.innerHTML = '<option value="">Choose...</option>' + 
-      resources.map(r => `<option value="${r.id}">${r.name} (Capacity: ${r.capacity})</option>`).join('');
+    select.innerHTML = `<option value="">${translate('choose')}</option>` +
+      resources.map(r => `<option value="${r.id}">${r.name} (${translate('capacity')}: ${r.capacity})</option>`).join('');
   } catch (error) {
     console.error('Error loading resources:', error);
   }
@@ -547,7 +938,7 @@ async function handleReservationSubmit(e) {
     const availResult = await availResponse.json();
     
     if (!availResult.available) {
-      alert('Sorry, this time slot is not available. Please choose a different time.');
+      alert(translate('noAvailability'));
       return;
     }
     
@@ -563,10 +954,10 @@ async function handleReservationSubmit(e) {
     if (response.ok) {
       document.getElementById('successMessage').innerHTML = `
         <div class="success-icon">✓</div>
-        <h3>Reservation Submitted!</h3>
+        <h3>${translate('reservationSubmitted')}</h3>
         <div class="order-number">${result.reservation_number}</div>
         <p>${result.message}</p>
-        <p>We will contact you at ${data.customer_phone} to confirm your reservation.</p>
+        <p>${translate('contactToConfirm', { phone: data.customer_phone })}</p>
       `;
       document.getElementById('successModal').classList.add('active');
       e.target.reset();
@@ -575,11 +966,11 @@ async function handleReservationSubmit(e) {
       const today = new Date().toISOString().split('T')[0];
       document.querySelector('input[name="date"]').value = today;
     } else {
-      alert(result.error || 'Failed to create reservation');
+      alert(result.error || translate('reservationFailed'));
     }
   } catch (error) {
     console.error('Error creating reservation:', error);
-    alert('Failed to create reservation. Please try again.');
+    alert(translate('reservationFailedRetry'));
   }
 }
 
